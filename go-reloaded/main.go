@@ -3,38 +3,46 @@ package main
 import (
 	"fmt"
 	"os"
-	"goreloaded/helpers"
 	"strings"
+	"goreloaded/core" 
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: go run . input_file.txt output_file.txt")
+	if len(os.Args) != 3 {
+		fmt.Println("Usage: go run . input.txt result.txt")
 		return
 	}
 
 	inputFile := os.Args[1]
 	outputFile := os.Args[2]
-	if !strings.HasSuffix(inputFile, ".txt") || !strings.HasSuffix(outputFile, ".txt") {
-		fmt.Println("Usage: go run . input_file.txt output_file.txt")
+
+	if !strings.HasSuffix(inputFile, ".txt") {
+		fmt.Println("Invalid file extension:", inputFile," Please provide a .txt input file.")
+		return
+	}
+	if !strings.HasSuffix(outputFile, ".txt") {
+		fmt.Println("Invalid file extension:", outputFile," Please provide a .txt output file.")
 		return
 	}
 
-	content, err := helpers.ReadFromFile(inputFile)
+	content, err := core.ReadFile(inputFile)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		fmt.Println("Error reading the file:", err)
 		return
 	}
 
-	words := helpers.FormatInput(content)
-	words = helpers.AtoAN(words)
-	words = helpers.ProcessWords(words)
+	words := core.SplitContent(content)
+	words = core.AtoAN(words)
+	fixedWords := core.FixFlags(words)
+	processedWords := core.ApplyFlags(fixedWords)
 	
-	formattedText := helpers.RemoveDuplicateSpaces(helpers.FormatOutput(words))
+	outputContent := core.FormatOutput(content,processedWords)
 
-	err = helpers.WriteToFile(outputFile, formattedText)
+	err = core.WriteFile(outputFile, outputContent)
 	if err != nil {
-		fmt.Println("Error writing file:", err)
+		fmt.Println("Error writing to the file:", err)
+		return
 	}
-	fmt.Println("Output written to", outputFile)
+
+	fmt.Println("File processing complete. Output written to", outputFile)
 }
