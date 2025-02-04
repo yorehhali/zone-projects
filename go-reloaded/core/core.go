@@ -71,12 +71,12 @@ func SplitContent(text string) []string {
 	res := []string{}
 	for i, char := range text {
 		if char == '\'' {
-			if (i > 0 && text[i-1] == ' ') || (i < len(text)-1 && text[i+1] == ' ') || (i < len(text)-1 && text[i+1] == '\'') || (i > 0 && text[i-1] == '\'') {
+			if (i > 0 && text[i-1] == ' ') || (i < len(text)-1 && text[i+1] == ' ') || (i < len(text)-1 && text[i+1] == '\'') || (i > 0 && text[i-1] == '\'') || (i == 0) {
 				if word != "" {
 					res = append(res, word)
 					word = ""
 				}
-				res = append(res, "'") // Add the quote as a separate token
+				res = append(res, "'")
 			} else {
 				word += string(char)
 			}
@@ -116,19 +116,13 @@ func SplitContent(text string) []string {
 func AtoAN(words []string) []string {
 	vowels := []rune{'a', 'e', 'i', 'o', 'u', 'h'}
 	for i := 0; i < len(words); i++ {
-		if words[i] == "a" {
+		if words[i] == "a" || words[i] == "A"{
 			for _, vowel := range vowels {
 				if i < len(words)-1 && strings.ToLower(string(words[i+1][0])) == string(vowel) {
-					words[i] = "an"
+					words[i] += "n"
 				}
 			}
-		} else if words[i] == "A" {
-			for _, vowel := range vowels {
-				if i < len(words)-1 && strings.ToLower(string(words[i+1][0])) == string(vowel) {
-					words[i] = "An"
-				}
-			}
-		}
+		} 
 	}
 	return words
 }
@@ -191,7 +185,7 @@ func Capitalize(word string) string {
 }
 
 func GetFlagFunction(FlagName string) func(string) string {
-	switch FlagName {
+	switch Lower(FlagName) {
 	case "hex":
 		return ConvertHex
 	case "bin":
@@ -219,11 +213,11 @@ func FixFlags(words []string) []string {
 	NewResult := []string{}
 	i := 0
 	for i < len(words) {
-		if i+2 < len(words) && words[i] == "(" && ValidateFlag(words[i+1]) && words[i+2] == ")" {
+		if i+2 < len(words) && words[i] == "(" && ValidateFlag(Lower(words[i+1])) && words[i+2] == ")" {
 			NewResult = append(NewResult, words[i]+words[i+1]+words[i+2])
 			i += 3
 			continue
-		} else if i+4 < len(words) && words[i] == "(" && ValidateFlag(words[i+1]) && words[i+2] == "," && IsNumber(words[i+3]) && words[i+4] == ")" {
+		} else if i+4 < len(words) && words[i] == "(" && ValidateFlag(Lower(words[i+1])) && words[i+2] == "," && IsNumber(words[i+3]) && words[i+4] == ")" {
 			NewResult = append(NewResult, words[i]+words[i+1]+words[i+2]+words[i+3]+words[i+4])
 			i += 5
 			continue

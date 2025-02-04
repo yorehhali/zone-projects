@@ -35,6 +35,8 @@ func main() {
 	words = core.AtoAN(words)
 	fixedWords := core.FixFlags(words)
 	processedWords := core.ApplyFlags(fixedWords)
+	fixedWords = core.FixFlags(processedWords)
+	processedWords = core.ApplyFlags(fixedWords)
 	
 	outputContent := core.FormatOutput(content,processedWords)
 
