@@ -12,91 +12,85 @@ type Banner struct {
 }
 
 var banners = map[string]Banner{
-	"standard":   {"banners/standard.txt", 9},
-	"thinkertoy": {"banners/thinkertoy.txt", 9},
-	"blocks":     {"banners/blocks.txt", 12},
-	"shadow":     {"banners/shadow.txt", 9},
-}
-
-var colors = map[string]string{
-	"red":    "\033[31m",
-	"green":  "\033[32m",
-	"yellow": "\033[33m",
-	"blue":   "\033[34m",
-	"reset":  "\033[0m",
+	"thinkertoy": {"banners/thinkertoy.txt", 8},
+	"standard":   {"banners/standard.txt", 8},
+	"shadow":     {"banners/shadow.txt", 8},
+	"phoenix":    {"banners/phoenix.txt", 7},
+	"blocks":     {"banners/blocks.txt", 11},
+	"arob":       {"banners/arob.txt", 8},
+	"coins":      {"banners/coins.txt", 8},
+	"fire":       {"banners/fire.txt", 9},
+	"jacky":      {"banners/jacky.txt", 8},
+	"small":      {"banners/small.txt", 5},
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <banner> <text> <color>")
-		fmt.Println("Or: go run main.go <text> (defaults to 'standard' banner and 'reset' color)")
+	var input, bannerName, outputFile string
+	args := os.Args[1:]
+	if len(args) < 1 || len(args) > 3 {
+		fmt.Println("Usage: go run main.go [OPTION] [STRING] [BANNER]")
 		return
 	}
-
-	// Assume the first argument is the input text by default
-	input := concatenateArgs(os.Args[1:])
-	bannerName := "standard" // Default banner
-	colorName := "reset"     // Default color
-
-	// If the last argument is a valid banner name, use it
-	if len(os.Args) >= 3 {
-		lastArg := os.Args[len(os.Args)-2]
-		if _, exists := banners[lastArg]; exists {
-			bannerName = lastArg
-			input = concatenateArgs(os.Args[1 : len(os.Args)-2]) // Exclude the banner name from input
-		} else {
-			colorName = lastArg // If not a banner, treat as color
+	if strings.HasPrefix(args[0], "--output=") {
+		parts := strings.SplitN(args[0], "=", 2)
+		if len(parts) != 2 {
+			fmt.Println("Invalid flag format. Use: --output=<filename>")
+			return
 		}
+		outputFile = parts[1]
+		args = args[1:]
 	}
-
-	// If the last argument is a valid color, use it
-	if len(os.Args) >= 3 && isValidColor(os.Args[len(os.Args)-1]) {
-		colorName = os.Args[len(os.Args)-1]
+	if len(args) == 1 {
+		input = args[0]
+		bannerName = "standard"
+	} else if len(args) == 2 {
+		input = args[0]
+		bannerName = args[1]
 	}
-
 	banner, exists := banners[bannerName]
 	if !exists {
 		fmt.Printf("Error: Banner '%s' not found.\n", bannerName)
 		return
 	}
-
-	color, exists := colors[colorName]
-	if !exists {
-		color = colors["reset"]
-	}
-
 	processedLines := handleNewlines(input)
-	generateAsciiArt(processedLines, banner, color)
-}
+	asciiArt := generateAsciiArt(processedLines, banner)
 
-func concatenateArgs(args []string) string {
-	return strings.Join(args, " ")
+	if outputFile != "" {
+		err := os.WriteFile(outputFile, []byte(asciiArt), 0664)
+		if err != nil {
+			fmt.Println("Error writing to file:", err)
+		}
+	} else {
+		fmt.Print(asciiArt)
+	}
 }
 
 func handleNewlines(input string) []string {
 	return strings.Split(input, "\\n")
 }
 
-func generateAsciiArt(lines []string, banner Banner, color string) {
+func generateAsciiArt(lines []string, banner Banner) string {
+	result := ""
 	for _, line := range lines {
 		if line == "" {
-			fmt.Println()
+			result += "\n"
 			continue
 		}
-		processLine(line, banner, color)
+		result += processLine(line, banner)
 	}
+	return result
 }
 
-func processLine(line string, banner Banner, color string) {
-	for i := 0; i < banner.lineHeight; i++ {
+func processLine(line string, banner Banner) string {
+	result := ""
+	for i := 1; i <= banner.lineHeight; i++ {
 		res := ""
 		for _, letter := range line {
-			res += getLine(1+int(letter-' ')*banner.lineHeight+i, banner.filePath)
+			res += getLine(1+int(letter-32)*(banner.lineHeight+1)+i, banner.filePath)
 		}
-		fmt.Print(color) // Set color
-		fmt.Println(res)
-		fmt.Print(colors["reset"]) // Reset color after each line
+		result += res + "\n"
 	}
+	return result
 }
 
 func getLine(num int, filePath string) string {
@@ -105,15 +99,9 @@ func getLine(num int, filePath string) string {
 		fmt.Println("Error reading banner file:", err)
 		os.Exit(1)
 	}
-
 	lines := strings.Split(string(content), "\n")
 	if num-1 < len(lines) {
 		return strings.ReplaceAll(lines[num-1], "\r", "")
 	}
 	return ""
-}
-
-func isValidColor(colorName string) bool {
-	_, exists := colors[colorName]
-	return exists
 }
