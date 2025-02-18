@@ -1,0 +1,17 @@
+<!-- profile.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Profile</title>
+</head>
+<body>
+    <h1>{{.Artist.Name}}</h1>
+    <img src="{{.Artist.Image}}" alt="Artist Image" width="200">
+    <p>Members: {{range .Artist.Members}}{{.}}, {{end}}</p>
+    <p>Creation Date: {{.Artist.CreationDate}}</p>
+    <p>First Album: {{.Artist.FirstAlbum}}</p>
+    <a href="/profiledates?id={{.ArtistId}}">View Concert Dates</a>
+</body>
+</html>

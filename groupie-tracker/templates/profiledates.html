@@ -1,0 +1,20 @@
+<!-- profiledates.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concert Dates</title>
+</head>
+<body>
+    <h1>Concert Dates for {{.Artist.Name}}</h1>
+    <ul>
+        {{range $city, $dates := .DatesLocations}}
+        <li>
+            <strong>{{$city}}</strong>: {{range $dates}}{{.}}, {{end}}
+        </li>
+        {{end}}
+    </ul>
+    <a href="/profile?id={{.ArtistId}}">Back to Profile</a>
+</body>
+</html>

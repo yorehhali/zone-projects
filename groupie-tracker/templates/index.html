@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groupie Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1 {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .artist-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s;
+            width: 200px;
+        }
+
+        .artist-card:hover {
+            transform: scale(1.05);
+        }
+
+        .artist-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .artist-card a {
+            display: block;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #333;
+        }
+
+        .artist-card a:hover {
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+    <h1>Groupie Tracker</h1>
+    <!-- Search Form -->
+    <form method="get" action="/">
+        <input type="text" name="search" placeholder="Search for artists..." value="{{.SearchQuery}}">
+        <button type="submit">Search</button>
+    </form>
+    
+    <!-- Display Artists -->
+    <div class="container">
+        {{range .Artists}}
+        <a href="/profile?id={{.Id}}">
+            <div class="artist-card">
+                <img src="{{.Image}}" alt="Artist Image">
+                {{.Name}}
+            </div>
+        </a>
+        {{end}}
+    </div>
+</body>
+</html>
