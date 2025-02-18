@@ -4,53 +4,43 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ASCII Art Generator</title>
-    <link rel="stylesheet" href="../frontend/style.css" />
-    <link rel="icon" href="../frontend/favicon.ico?v=3" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="icon" href="/static/favicon.ico?v=3" />
   </head>
   <body>
     <div class="container">
-      <img src="../frontend/media/logo.png" alt="Ascii art logo">
-      <form action="/" method="POST">
+      <img src="/static/media/logo.png" alt="Ascii art logo" />
+      <form action="/ascii-art" method="POST">
         <div class="top">
           <div class="left">
             <label for="text">Enter Text:</label>
-            <input
-              type="text"
-              id="text"
-              name="text"
-              placeholder="Type something..."
-              required
-            />
+            <textarea id="text" name="text" required></textarea>
           </div>
           <div class="right">
             <label for="banner">Select Banner Style:</label>
             <select id="banner" name="banner" required>
-                <option value="thinkertoy">Thinkertoy</option>
-                <option value="standard">Standard</option>
-                <option value="shadow">Shadow</option>
-                <option value="phoenix">Phoenix</option>
-                <option value="blocks">Blocks</option>
-                <option value="arob">Arob</option>
-                <option value="coins">Coins</option>
-                <option value="fire">Fire</option>
-                <option value="jacky">Jacky</option>
-                <option value="small">Small</option>
+              <option value="thinkertoy">Thinkertoy</option>
+              <option value="standard">Standard</option>
+              <option value="shadow">Shadow</option>
+              <option value="phoenix">Phoenix</option>
+              <option value="blocks">Blocks</option>
+              <option value="arob">Arob</option>
+              <option value="coins">Coins</option>
+              <option value="fire">Fire</option>
+              <option value="jacky">Jacky</option>
+              <option value="small">Small</option>
             </select>
           </div>
         </div>
-        <pre>
-
-                 
-            {{if .Art}}{{.Art}}{{else}}
-                     _____    _____   _____   _____                    _____    _______        __          __  ______   ____   
-            /\      / ____|  / ____| |_   _| |_   _|           /\     |  __ \  |__   __|       \ \        / / |  ____| |  _ \  
-           /  \    | (___   | |        | |     | |            /  \    | |__) |    | |           \ \  /\  / /  | |__    | |_) | 
-          / /\ \    \___ \  | |        | |     | |           / /\ \   |  _  /     | |            \ \/  \/ /   |  __|   |  _ <  
-         / ____ \   ____) | | |____   _| |_   _| |_         / ____ \  | | \ \     | |             \  /\  /    | |____  | |_) | 
-        /_/    \_\ |_____/   \_____| |_____| |_____|       /_/    \_\ |_|  \_\    |_|              \/  \/     |______| |____/  
-                                                                                                                               
-            {{end}}
-        </pre>
+        <div class="bottom">
+          <label>Output:</label>
+          <pre>{{if .Art}}
+{{.Art}}
+{{else if .Error}}
+<p style="color: red">{{.Error}}</p>
+{{else}}______    _______    _______    _______    _____    ______
+{{end}}</pre>
+        </div>
         <button type="submit">Generate ASCII Art</button>
       </form>
     </div>

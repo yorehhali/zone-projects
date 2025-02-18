@@ -1,110 +1,117 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
-	"os"
-	"strings"
+	"test/asciiart"
 )
 
-type Banner struct {
-	filePath   string
-	lineHeight int
-}
+var templates map[string]*template.Template
 
-var banners = map[string]Banner{
-	"thinkertoy": {"banners/thinkertoy.txt", 8},
-	"standard":   {"banners/standard.txt", 8},
-	"shadow":     {"banners/shadow.txt", 8},
-	"phoenix":    {"banners/phoenix.txt", 7},
-	"blocks":     {"banners/blocks.txt", 11},
-	"arob":       {"banners/arob.txt", 8},
-	"coins":      {"banners/coins.txt", 8},
-	"fire":       {"banners/fire.txt", 9},
-	"jacky":      {"banners/jacky.txt", 8},
-	"small":      {"banners/small.txt", 5},
+var errorMessages = map[int]string{
+	http.StatusNotFound:            "Page not found",
+	http.StatusBadRequest:          "Invalid request",
+	http.StatusForbidden:           "Access forbidden",
+	http.StatusInternalServerError: "Internal server error",
+	http.StatusMethodNotAllowed:    "Method not allowed",
 }
 
 type PageData struct {
 	Art string
 }
 
+type ErrorData struct {
+	ErrorCode    int
+	ErrorMessage string
+}
+
 func main() {
+	templates = map[string]*template.Template{
+		"home":  template.Must(template.ParseFiles("frontend/index.html")),
+		"error": template.Must(template.ParseFiles("frontend/error.html")),
+	}
+
 	http.HandleFunc("/", homeHandler)
-	http.Handle("/frontend/", http.StripPrefix("/frontend/", http.FileServer(http.Dir("frontend"))))
-	fmt.Println("Server running on port 8080...")
-	http.ListenAndServe(":8080", nil)
+	http.HandleFunc("/ascii-art", artHandler)
+	fs := http.FileServer(http.Dir("frontend/static"))
+	http.Handle("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/static/" {
+			data := ErrorData{ErrorCode: http.StatusForbidden, ErrorMessage: getErrorMessage(http.StatusForbidden)}
+			renderTemplate(w, "error", data)
+			return
+		}
+		http.StripPrefix("/static/", fs).ServeHTTP(w, r)
+	}))
+
+	log.Println("Server started on http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", recoverHandler(http.DefaultServeMux)))
+}
+
+func getErrorMessage(code int) string {
+	if msg, exists := errorMessages[code]; exists {
+		return msg
+	}
+	return "An unexpected error occurred"
+}
+
+func recoverHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Printf("Recovered from panic: %v", err)
+				data := ErrorData{ErrorCode: http.StatusInternalServerError, ErrorMessage: getErrorMessage(http.StatusInternalServerError)}
+				renderTemplate(w, "error", data)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-    if r.Method == http.MethodGet {
-        tmpl := template.Must(template.ParseFiles("frontend/index.html"))
-        tmpl.Execute(w, nil)
-        return
-    }
-
-    if r.Method == http.MethodPost {
-        text := r.FormValue("text")
-        bannerName := r.FormValue("banner")
-
-        banner, exists := banners[bannerName]
-        if !exists {
-            http.Error(w, "Invalid banner", http.StatusBadRequest)
-            return
-        }
-
-        processedLines := handleNewlines(text)
-        asciiArt := generateAsciiArt(processedLines, banner)
-
-        data := PageData{Art: asciiArt}
-        tmpl := template.Must(template.ParseFiles("frontend/index.html"))
-        tmpl.Execute(w, data)
-        return
-    }
-
-    http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-}
-
-
-func handleNewlines(input string) []string {
-	return strings.Split(input, "\\n")
-}
-
-func generateAsciiArt(lines []string, banner Banner) string {
-	result := ""
-	for _, line := range lines {
-		if line != "" {  // Avoid adding empty lines
-			result += processLine(line, banner)
-		}
+	if r.URL.Path != "/" {
+		data := ErrorData{ErrorCode: http.StatusNotFound, ErrorMessage: getErrorMessage(http.StatusNotFound)}
+		renderTemplate(w, "error", data)
+		return
 	}
-	return result
+	renderTemplate(w, "home", nil)
 }
 
-
-func processLine(line string, banner Banner) string {
-	result := "\n"
-	for i := 1; i <= banner.lineHeight; i++ {
-		res := ""
-		for _, letter := range line {
-			res += getLine(1+int(letter-32)*(banner.lineHeight+1)+i, banner.filePath)
+func artHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		text := r.FormValue("text")
+		if text == "" || len(text) > 400 {
+			data := ErrorData{ErrorCode: http.StatusBadRequest, ErrorMessage: getErrorMessage(http.StatusBadRequest)}
+			renderTemplate(w, "error", data)
+			return
 		}
-		result += res+ "\n" 
+		bannerName := r.FormValue("banner")
+
+		_, exists := ascii.Banners[bannerName]
+		if !exists {
+			data := ErrorData{ErrorCode: http.StatusBadRequest, ErrorMessage: getErrorMessage(http.StatusBadRequest)}
+			renderTemplate(w, "error", data)
+			return
+		}
+		asciiArt := ascii.GenAscii(text, bannerName)
+		
+		data := PageData{Art: asciiArt}
+		renderTemplate(w, "home", data)
+		return
 	}
-	result += "\n" // Only add a newline at the end of the processed line
-	return result
+	renderTemplate(w, "home", nil)
 }
 
-
-func getLine(num int, filePath string) string {
-	content, err := os.ReadFile(filePath)
+func renderTemplate(w http.ResponseWriter, name string, data interface{}) {
+	tmpl, ok := templates[name]
+	if !ok {
+		log.Println("Template not found:", name)
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
+	}
+	err := tmpl.Execute(w, data)
 	if err != nil {
-		return "Error reading banner file."
+		log.Println("Error rendering template:", err)
+		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 	}
-
-	lines := strings.Split(string(content), "\n")
-	if num-1 < len(lines) {
-		return strings.ReplaceAll(lines[num-1], "\r", "")
-	}
-	return ""
 }

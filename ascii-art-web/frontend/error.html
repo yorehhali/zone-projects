@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error - ASCII Art Generator</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="icon" href="/static/favicon.ico?v=3" />
+  </head>
+  <body>
+    <div class="container">
+      <img src="/static/media/logo.png" alt="Ascii art logo" />
+      <h1>{{.ErrorCode}}</h1>
+      <p>{{.ErrorMessage}}</p>
+      <a href="/"><button>Go Back</button></a>
+    </div>
+  </body>
+</html>
